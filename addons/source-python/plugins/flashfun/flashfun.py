@@ -10,6 +10,9 @@
 from contextlib import suppress
 
 # Source.Python Imports
+#   Colors
+from colors import RED
+from colors import WHITE
 #   Entities
 from entities.hooks import EntityPreHook
 from entities.hooks import EntityCondition
@@ -30,11 +33,27 @@ from flashfun.config import cvar_health_max
 from flashfun.config import cvar_health_start
 from flashfun.config import cvar_health_reward
 from flashfun.config import cvar_respawn_delay
+from flashfun.config import cvar_spawn_protection_time
 
 
 # =============================================================================
 # >> HELPER FUNCTIONS
 # =============================================================================
+def enable_spawn_protection(player):
+    """Enable spawn protection for the player."""
+    player.godmode = True
+    player.color = RED
+
+
+def disable_spawn_protection(player_index):
+    """Disable spawn protection for the player."""
+    with suppress(ValueError):
+        player = Player(player_index)
+
+        player.godmode = False
+        player.color = WHITE
+
+
 def prepare_player(player):
     """Prepare the player."""
     # Set starting health and armor
@@ -43,6 +62,10 @@ def prepare_player(player):
 
     # Give the player a flashbang
     player.give_named_item('weapon_flashbang',)
+
+    # Enable spawn protection
+    enable_spawn_protection(player)
+    player.delay(abs(int(cvar_spawn_protection_time)), disable_spawn_protection, (player.index,))
 
 
 def handle_player_reward(player, attr, gain, max_value):

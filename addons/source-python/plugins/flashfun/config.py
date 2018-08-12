@@ -59,3 +59,9 @@ with ConfigManager(info.name) as config:
         1,
         'The respawn delay in seconds.'
     )
+
+    cvar_spawn_protection_time = config.cvar(
+        'spawn_protection_time',
+        3,
+        'The spawn protection time in seconds.'
+    )
