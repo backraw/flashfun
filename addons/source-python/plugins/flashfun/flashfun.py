@@ -22,6 +22,15 @@ from players.entity import Player
 #   Weapons
 from weapons.entity import Weapon
 
+# Plugin Imports
+from flashfun.config import cvar_armor_max
+from flashfun.config import cvar_armor_start
+from flashfun.config import cvar_armor_reward
+from flashfun.config import cvar_health_max
+from flashfun.config import cvar_health_start
+from flashfun.config import cvar_health_reward
+from flashfun.config import cvar_respawn_delay
+
 
 # =============================================================================
 # >> HELPER FUNCTIONS
@@ -29,11 +38,24 @@ from weapons.entity import Weapon
 def prepare_player(player):
     """Prepare the player."""
     # Set starting health and armor
-    player.health = 1
-    player.armor = 0
+    player.health = int(cvar_health_start)
+    player.armor = int(cvar_armor_start)
 
     # Give the player a flashbang
     player.give_named_item('weapon_flashbang',)
+
+
+def handle_player_reward(player, attr, gain, max_value):
+    """Handle a player reward."""
+    # Calculate the new value for the reward attribute ('health' or 'armor')
+    new_value = getattr(player, attr) + gain
+
+    # If it exceeds the maximum value, set the maximum value as the new value
+    if new_value > max_value:
+        new_value = max_value
+
+    # Set the new reward attribute value
+    setattr(player, attr, new_value)
 
 
 def remove_weapon(weapon_index):
@@ -59,9 +81,22 @@ def on_player_spawn(game_event):
 
 @Event('player_death')
 def on_player_death(game_event):
-    """Respawn the victim."""
+    """Respawn the victim and handle attacker rewards."""
+    # Respawn the victim
     victim = Player.from_userid(game_event['userid'])
-    victim.delay(1.0, victim.spawn, (True, ))
+    victim.delay(int(cvar_respawn_delay), victim.spawn, (True, ))
+
+    # Handle attacker rewards, if the attacker and the victim are not on the same team
+    attacker = Player.from_userid(game_event['attacker'])
+
+    if attacker.team != victim.team:
+        handle_player_reward(
+            attacker, 'armor', abs(int(cvar_armor_reward)), abs(int(cvar_armor_max)) or 999
+        )
+
+        handle_player_reward(
+            attacker, 'health', abs(int(cvar_health_reward)), abs(int(cvar_health_max)) or 999
+        )
 
 
 @Event('weapon_fire')
