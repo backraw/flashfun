@@ -65,3 +65,9 @@ with ConfigManager(info.name) as config:
         3,
         'The spawn protection time in seconds.'
     )
+
+    cvar_admin_saycommand = config.cvar(
+        'admin_saycommand',
+        '!flashfun',
+        'The admin say command.'
+    )
