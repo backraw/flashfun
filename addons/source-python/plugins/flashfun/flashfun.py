@@ -26,6 +26,7 @@ from players.entity import Player
 from weapons.entity import Weapon
 
 # Plugin Imports
+#   Config
 from flashfun.config import cvar_armor_max
 from flashfun.config import cvar_armor_start
 from flashfun.config import cvar_armor_reward
