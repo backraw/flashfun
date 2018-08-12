@@ -110,16 +110,17 @@ def on_player_death(game_event):
     victim.delay(int(cvar_respawn_delay), victim.spawn, (True, ))
 
     # Handle attacker rewards, if the attacker and the victim are not on the same team
-    attacker = Player.from_userid(game_event['attacker'])
+    with suppress(ValueError):
+        attacker = Player.from_userid(game_event['attacker'])
 
-    if attacker.team != victim.team:
-        handle_player_reward(
-            attacker, 'armor', abs(int(cvar_armor_reward)), abs(int(cvar_armor_max)) or 999
-        )
+        if attacker.team != victim.team:
+            handle_player_reward(
+                attacker, 'armor', abs(int(cvar_armor_reward)), abs(int(cvar_armor_max)) or 999
+            )
 
-        handle_player_reward(
-            attacker, 'health', abs(int(cvar_health_reward)), abs(int(cvar_health_max)) or 999
-        )
+            handle_player_reward(
+                attacker, 'health', abs(int(cvar_health_reward)), abs(int(cvar_health_max)) or 999
+            )
 
 
 @Event('weapon_fire')
