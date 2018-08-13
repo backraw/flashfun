@@ -33,12 +33,12 @@ from weapons.entity import Weapon
 from flashfun.admin import admin_menu
 from flashfun.admin.submenus import spawn_locations_manager_menu
 #   Config
+from flashfun.config import cvar_admin_saycommand
 from flashfun.config import cvar_armor_max
 from flashfun.config import cvar_armor_reward
 from flashfun.config import cvar_health_max
 from flashfun.config import cvar_health_reward
 from flashfun.config import cvar_respawn_delay
-from flashfun.config import cvar_admin_saycommand
 #   Info
 from flashfun.info import info
 #   Util
