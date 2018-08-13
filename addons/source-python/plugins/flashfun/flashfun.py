@@ -15,11 +15,13 @@ from commands.typed import TypedSayCommand
 #   Core
 from core import OutputReturn
 #   Entities
+from entities.entity import Entity
 from entities.hooks import EntityPreHook
 from entities.hooks import EntityCondition
 #   Events
 from events import Event
 #   Listeners
+from listeners import OnEntitySpawned
 from listeners import OnServerOutput
 #   Memory
 from memory import make_object
@@ -192,8 +194,20 @@ def on_saycommand_admin(command_info):
 
 
 # =============================================================================
-# >> CONSOLE OUTPUT
+# >> LISTENERS
 # =============================================================================
+@OnEntitySpawned
+def on_entity_spawned(base_entity):
+    """Remove hostage entities and disable map entity functions as soon as they spawn."""
+    if base_entity.classname == 'hostage_entity':
+        base_entity.remove()
+
+    elif base_entity.classname.startswith('func_'):
+        with suppress(ValueError):
+            entity = Entity(base_entity.index)
+            entity.call_input('Disable')
+
+
 @OnServerOutput
 def on_server_output(severity, msg):
     """Block server warnings this plugin causes."""
