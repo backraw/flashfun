@@ -38,6 +38,8 @@ from flashfun.config import cvar_armor_max
 from flashfun.config import cvar_armor_reward
 from flashfun.config import cvar_health_max
 from flashfun.config import cvar_health_reward
+from flashfun.config import cvar_hegrenade_reward_multiplier
+from flashfun.config import cvar_hegrenade_reward_type
 from flashfun.config import cvar_respawn_delay
 #   Info
 from flashfun.info import info
@@ -78,6 +80,8 @@ def on_player_death(game_event):
         attacker = Player.from_userid(game_event['attacker'])
 
         if attacker.team != victim.team:
+
+            # Handle health and armor rewards
             handle_player_reward(
                 attacker, 'armor', abs(int(cvar_armor_reward)), abs(int(cvar_armor_max)) or 999
             )
@@ -85,6 +89,22 @@ def on_player_death(game_event):
             handle_player_reward(
                 attacker, 'health', abs(int(cvar_health_reward)), abs(int(cvar_health_max)) or 999
             )
+
+            # Get the High Explosive reward type
+            hegrenade_reward_type = str(cvar_hegrenade_reward_type)
+
+            # Get the value for the reward type
+            reward_type_value = getattr(attacker, hegrenade_reward_type)
+
+            # Only respect values higher than zero
+            if reward_type_value > 0:
+
+                # Get the reward multiplier
+                hegrenade_reward_multiplier = int(cvar_hegrenade_reward_multiplier)
+
+                # Give the player a High Explosive grenade, if the player reached the reward multiplier
+                if reward_type_value % hegrenade_reward_multiplier == 0:
+                    attacker.give_named_item('weapon_hegrenade')
 
 
 @Event('weapon_fire')
@@ -133,8 +153,8 @@ def on_pre_bump_weapon(stack_data):
     # Get a Weapon object from the second stack_data item
     weapon = make_object(Weapon, stack_data[1])
 
-    # Block bumping into the weapon and remove it later, if it is not a flashbang
-    if weapon.classname != 'weapon_flashbang':
+    # Block bumping into the weapon and remove it later, if it is not a flashbang or a High Explosive grenade
+    if weapon.classname not in ('weapon_flashbang', 'weapon_hegrenade'):
         weapon.delay(2.0, remove_weapon, (weapon.index,), cancel_on_level_end=True)
         return False
 
@@ -144,18 +164,6 @@ def on_pre_bump_weapon(stack_data):
     # Block bumping into the weapon and remove it later, if the player is currently using the Admin menu
     if player.userid in admin_menu.users:
         weapon.delay(2.0, remove_weapon, (weapon.index,), cancel_on_level_end=True)
-        return False
-
-    # Get the player's active weapon
-    active_weapon = player.get_active_weapon()
-
-    # Remove it later, if it is no flashbang
-    if active_weapon is not None:
-        if active_weapon.classname != 'weapon_flashbang':
-            player.delay(2.0, remove_weapon, (active_weapon.index,), cancel_on_level_end=True)
-            player.delay(1.0, player.give_named_item, ('weapon_flashbang',), cancel_on_level_end=True)
-
-        # Also block bumping into it
         return False
 
 

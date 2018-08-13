@@ -16,18 +16,14 @@ from flashfun.info import info
 # =============================================================================
 # >> PLUGIN CONFIGURATION
 # =============================================================================
-with ConfigManager(info.name) as config:
+with ConfigManager(info.name, cvar_prefix=f'{info.name}_') as config:
+
+    config.section('PLAYER ATTRIBUTES', '=')
 
     cvar_health_start = config.cvar(
         'health_start',
         1,
         'The health value the player starts with.'
-    )
-
-    cvar_health_reward = config.cvar(
-        'health_reward',
-        2,
-        'The health value the player gets as a reward for killing an enemy (0 to turn off).'
     )
 
     cvar_health_max = config.cvar(
@@ -42,17 +38,39 @@ with ConfigManager(info.name) as config:
         'The armor value the player starts with.'
     )
 
+    cvar_armor_max = config.cvar(
+        'armor_max',
+        30,
+        'The maximum armor value a player can have (0 = 999).'
+    )
+
+    config.section('PLAYER REWARDS', '=')
+
+    cvar_health_reward = config.cvar(
+        'health_reward',
+        2,
+        'The health value the player gets as a reward for killing an enemy (0 to turn off).'
+    )
+
     cvar_armor_reward = config.cvar(
         'armor_reward',
         1,
         'The armor value the player gets as a reword for killing an enemy (0 to turn off).'
     )
 
-    cvar_armor_max = config.cvar(
-        'armor_max',
-        30,
-        'The maximum armor value a player can have (0 = 999).'
+    cvar_hegrenade_reward_type = config.cvar(
+        'hegrenade_reward_type',
+        'kills',
+        'The High Explosive reward type. Can be "health" or "kills" (see the multiplier option below).'
     )
+
+    cvar_hegrenade_reward_multiplier = config.cvar(
+        'hegrenade_reward_multiplier',
+        5,
+        'The multiplier at which players receive a High Explosive grenade depending on the reward type.'
+    )
+
+    config.section('GAMEPLAY', '=')
 
     cvar_respawn_delay = config.cvar(
         'respawn_delay',
@@ -65,6 +83,8 @@ with ConfigManager(info.name) as config:
         3,
         'The spawn protection time in seconds.'
     )
+
+    config.section('SAY COMMANDS', '=')
 
     cvar_admin_saycommand = config.cvar(
         'admin_saycommand',
