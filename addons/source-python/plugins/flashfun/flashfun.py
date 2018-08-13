@@ -19,10 +19,10 @@ from entities.hooks import EntityPreHook
 from entities.hooks import EntityCondition
 #   Events
 from events import Event
-#   Memory
-from memory import make_object
 #   Listeners
 from listeners import OnServerOutput
+#   Memory
+from memory import make_object
 #   Players
 from players.entity import Player
 #   Weapons
