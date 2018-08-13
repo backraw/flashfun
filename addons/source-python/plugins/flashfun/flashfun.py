@@ -128,7 +128,7 @@ def on_pre_drop_weapon(stack_data):
 
 @EntityPreHook(EntityCondition.is_bot_player, 'bump_weapon')
 @EntityPreHook(EntityCondition.is_human_player, 'bump_weapon')
-def on_pre_bump(stack_data):
+def on_pre_bump_weapon(stack_data):
     """Block bumping into another flashbang, if the player already owns one."""
     # Get a Weapon object from the second stack_data item
     weapon = make_object(Weapon, stack_data[1])
