@@ -20,8 +20,8 @@ with ConfigManager(info.name, cvar_prefix=f'{info.name}_') as config:
 
     config.section('PLAYER ATTRIBUTES', '=')
 
-    cvar_health_start = config.cvar(
-        'health_start',
+    cvar_health_spawn = config.cvar(
+        'health_spawn',
         1,
         'The health value the player starts with.'
     )
@@ -32,8 +32,8 @@ with ConfigManager(info.name, cvar_prefix=f'{info.name}_') as config:
         'The maximum health value a player can have (0 = 999).'
     )
 
-    cvar_armor_start = config.cvar(
-        'armor_start',
+    cvar_armor_spawn = config.cvar(
+        'armor_spawn',
         0,
         'The armor value the player starts with.'
     )

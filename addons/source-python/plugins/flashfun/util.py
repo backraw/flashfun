@@ -24,8 +24,8 @@ from weapons.entity import Weapon
 
 # Plugin Imports
 #   Config
-from flashfun.config import cvar_armor_start
-from flashfun.config import cvar_health_start
+from flashfun.config import cvar_armor_spawn
+from flashfun.config import cvar_health_spawn
 from flashfun.config import cvar_spawn_protection_time
 #   Colors
 from flashfun.colors import MESSAGE_COLOR_ORANGE
@@ -73,9 +73,9 @@ def prepare_player(player):
     spawn_location_dispatch_thread = GameThread(target=SpawnLocationDispatcher.perform_action, args=(player,))
     spawn_location_dispatch_thread.start()
 
-    # Set starting health and armor
-    player.health = int(cvar_health_start)
-    player.armor = int(cvar_armor_start)
+    # Set health and armor spawn values
+    player.health = int(cvar_health_spawn)
+    player.armor = int(cvar_armor_spawn)
 
     # Give the player a flashbang
     player.give_named_item('weapon_flashbang',)
