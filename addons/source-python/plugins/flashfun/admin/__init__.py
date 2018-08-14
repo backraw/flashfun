@@ -16,6 +16,7 @@ from players.entity import Player
 
 # Plugin Imports
 #   Util
+from flashfun.util import equip_player
 from flashfun.util import disable_damage_protection
 
 
@@ -57,8 +58,8 @@ def on_close_admin_menu(menu, player_index):
     # Remove the player from the Admin menu users storage
     admin_menu.users.remove(player.userid)
 
-    # Equip the player with a flashbang grenade
-    player.give_named_item('weapon_flashbang')
+    # Equip the player
+    equip_player(player)
 
     # Disable spawn protection for the player
     disable_damage_protection(player.index)

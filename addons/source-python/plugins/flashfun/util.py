@@ -19,8 +19,11 @@ from listeners.tick import GameThread
 from messages import SayText2
 #   Players
 from players.entity import Player
+#   Rewards
+from flashfun.rewards import player_rewards_list
 #   Weapons
 from weapons.entity import Weapon
+from weapons.manager import weapon_manager
 
 # Plugin Imports
 #   Config
@@ -32,6 +35,9 @@ from flashfun.colors import MESSAGE_COLOR_ORANGE
 from flashfun.colors import MESSAGE_COLOR_WHITE
 #   Info
 from flashfun.info import info
+#   Rewards
+from flashfun.rewards import player_rewards_list
+from flashfun.rewards import weapon_rewards
 #   Spawn Locations
 from flashfun.spawn_locations import SpawnLocationDispatcher
 
@@ -56,7 +62,11 @@ def disable_damage_protection(player_index):
 
 def handle_player_reward(player, attr, gain, max_value):
     """Handle a player reward."""
-    # Calculate the new value for the reward attribute ('health' or 'armor')
+    # Fix the maximum value if it is zero
+    if max_value == 0:
+        max_value = 999
+
+    # Calculate the new value for the reward attribute
     new_value = getattr(player, attr) + gain
 
     # If it exceeds the maximum value, set the maximum value as the new value
@@ -65,6 +75,51 @@ def handle_player_reward(player, attr, gain, max_value):
 
     # Set the new reward attribute value
     setattr(player, attr, new_value)
+
+
+def handle_weapon_reward(player, reward_type, reward_multiplier, basename):
+    """Handle weapon rewards."""
+    # Get the player's property value for the reward type
+    reward_type_value = getattr(player, reward_type)
+
+    # Only respect values higher than zero
+    if reward_type_value > 0:
+
+        # If the player has reached the multiplier, handle the reward
+        if reward_type_value % reward_multiplier == 0:
+            classname = weapon_manager[basename].name
+
+            player_rewards_list.append((player.userid, classname))
+            equip_player(player, classname)
+
+
+def handle_weapon_reward_properties(weapon):
+    """Handle weapon reward properties."""
+    with suppress(AttributeError):
+
+        # Get a Player object fort the player
+        player = Player(weapon.owner.index)
+
+        # Ignore handling if the reward properties have already been prepared
+        if (player.userid, weapon.classname) not in player_rewards_list:
+            return
+
+        # Get the reward values
+        reward_values = weapon_rewards[weapon_manager[weapon.classname].basename]
+
+        # Set the weapon properties
+        with suppress(ValueError):
+            weapon.clip = int(reward_values.get('clip', weapon.clip))
+            weapon.ammo = int(reward_values.get('ammo', weapon.ammo))
+
+        # Remove the player from the player rewards list
+        player_rewards_list.remove((player.userid, weapon.classname))
+
+
+def equip_player(player, classname='weapon_flashbang'):
+    """Equip the player with a weapon, if they don't already own one."""
+    if player.get_weapon(classname) is None:
+        player.give_named_item(classname)
 
 
 def prepare_player(player):
@@ -77,8 +132,8 @@ def prepare_player(player):
     player.health = int(cvar_health_spawn)
     player.armor = int(cvar_armor_spawn)
 
-    # Give the player a flashbang
-    player.give_named_item('weapon_flashbang',)
+    # Equip the player
+    equip_player(player)
 
     # Enable spawn protection
     enable_damage_protection(player)

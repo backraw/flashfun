@@ -36,18 +36,19 @@ from flashfun.admin import admin_menu
 from flashfun.admin.submenus import spawn_locations_manager_menu
 #   Config
 from flashfun.config import cvar_admin_saycommand
-from flashfun.config import cvar_armor_max
-from flashfun.config import cvar_armor_reward
-from flashfun.config import cvar_health_max
-from flashfun.config import cvar_health_reward
-from flashfun.config import cvar_hegrenade_reward_multiplier
-from flashfun.config import cvar_hegrenade_reward_type
 from flashfun.config import cvar_respawn_delay
 #   Info
 from flashfun.info import info
+#   Rewards
+from flashfun.rewards import player_attribute_rewards
+from flashfun.rewards import player_rewards_list
+from flashfun.rewards import weapon_rewards
 #   Util
 from flashfun.util import enable_damage_protection
+from flashfun.util import equip_player
 from flashfun.util import handle_player_reward
+from flashfun.util import handle_weapon_reward
+from flashfun.util import handle_weapon_reward_properties
 from flashfun.util import prepare_player
 from flashfun.util import remove_weapon
 
@@ -83,37 +84,32 @@ def on_player_death(game_event):
 
         if attacker.team != victim.team:
 
-            # Handle health and armor rewards
-            handle_player_reward(
-                attacker, 'armor', abs(int(cvar_armor_reward)), abs(int(cvar_armor_max)) or 999
-            )
+            # Handle attacker attribute rewards
+            for attr, values in player_attribute_rewards.items():
+                handle_player_reward(attacker, attr, abs(int(values['value'])), abs(int(values.get('max_value', 0))))
 
-            handle_player_reward(
-                attacker, 'health', abs(int(cvar_health_reward)), abs(int(cvar_health_max)) or 999
-            )
-
-            # Get the High Explosive reward type
-            hegrenade_reward_type = str(cvar_hegrenade_reward_type)
-
-            # Get the value for the reward type
-            reward_type_value = getattr(attacker, hegrenade_reward_type)
-
-            # Only respect values higher than zero
-            if reward_type_value > 0:
-
-                # Get the reward multiplier
-                hegrenade_reward_multiplier = int(cvar_hegrenade_reward_multiplier)
-
-                # Give the player a High Explosive grenade, if the player reached the reward multiplier
-                if reward_type_value % hegrenade_reward_multiplier == 0:
-                    attacker.give_named_item('weapon_hegrenade')
+            # Handle weapon rewards
+            for basename, values in weapon_rewards.items():
+                handle_weapon_reward(attacker, values['type'], int(values['multiplier']), basename)
 
 
 @Event('weapon_fire')
 def on_weapon_fire(game_event):
-    """Equip the player with another flashbang grenade."""
+    """Handle re-equipping the player."""
+    # Get a Player object for the player
     player = Player.from_userid(game_event['userid'])
-    player.delay(1.0, player.give_named_item, ('weapon_flashbang',), cancel_on_level_end=True)
+
+    # Get the Weapon object for the weapon the player is firing
+    weapon = player.get_weapon(game_event['weapon'])
+
+    # Re-equip the player with another flashbang grenade, if one has been thrown
+    if weapon.classname == 'weapon_flashbang':
+        player.delay(1.0, equip_player, (player,), cancel_on_level_end=True)
+
+    # Remove the weapon if it is going to run out of ammo
+    with suppress(ValueError):
+        if weapon.clip == 1 and weapon.ammo == 0:
+            weapon.delay(0.2, weapon.remove)
 
 
 # =============================================================================
@@ -152,16 +148,20 @@ def on_pre_drop_weapon(stack_data):
 @EntityPreHook(EntityCondition.is_human_player, 'bump_weapon')
 def on_pre_bump_weapon(stack_data):
     """Block bumping into another flashbang, if the player already owns one."""
+    # Get a Player object from the first stack_data item
+    player = make_object(Player, stack_data[0])
+
     # Get a Weapon object from the second stack_data item
     weapon = make_object(Weapon, stack_data[1])
 
     # Block bumping into the weapon and remove it later, if it is not a flashbang or a High Explosive grenade
-    if weapon.classname not in ('weapon_flashbang', 'weapon_hegrenade'):
-        weapon.delay(2.0, remove_weapon, (weapon.index,), cancel_on_level_end=True)
-        return False
+    if weapon.classname != 'weapon_flashbang':
 
-    # Get a Player object from the first stack_data item
-    player = make_object(Player, stack_data[0])
+        if (player.userid, weapon.classname) not in player_rewards_list:
+            weapon.delay(2.0, remove_weapon, (weapon.index,), cancel_on_level_end=True)
+            return False
+
+        weapon.delay(0.2, handle_weapon_reward_properties, (weapon,))
 
     # Block bumping into the weapon and remove it later, if the player is currently using the Admin menu
     if player.userid in admin_menu.users:
